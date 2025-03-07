@@ -33,7 +33,6 @@ var init = function () {
     ctx.fillRect(0, 0, width, height);
 
     var heartPosition = function (rad) {
-        //return [Math.sin(rad), Math.cos(rad)];
         return [Math.pow(Math.sin(rad), 3), -(15 * Math.cos(rad) - 5 * Math.cos(2 * rad) - 2 * Math.cos(3 * rad) - Math.cos(4 * rad))];
     };
     var scaleAndTranslate = function (pos, sx, sy, dx, dy) {
@@ -73,7 +72,7 @@ var init = function () {
             vx: 0,
             vy: 0,
             R: 2,
-            speed: rand() + 5,
+            speed: 18,
             q: ~~(rand() * heartPointsCount),
             D: 2 * (i % 2) - 1,
             force: 0.2 * rand() + 0.7,
@@ -89,12 +88,36 @@ var init = function () {
     };
 
     var time = 0;
+    var fadeStartTime = null; // Time when fade begins
+    var textOpacity = 0; // Opacity of the text
+
     var loop = function () {
         var n = -Math.cos(time);
         pulse((1 + n) * .5, (1 + n) * .5);
         time += ((Math.sin(time)) < 0 ? 9 : (n > 0.8) ? .2 : 1) * config.timeDelta;
         ctx.fillStyle = "rgba(0,0,0,.1)";
         ctx.fillRect(0, 0, width, height);
+
+        // Handle fade-in logic
+        var currentTime = Date.now();
+        if (!fadeStartTime) {
+            fadeStartTime = currentTime + 1000; // Start fade after 1 second (1000ms)
+        }
+        if (currentTime >= fadeStartTime) {
+            // Calculate how far into the fade we are (1-second fade duration)
+            var fadeProgress = (currentTime - fadeStartTime) / 8000; // 0 to 1 over 1 second
+            textOpacity = Math.min(fadeProgress, 0.3); // Cap at 1 (fully opaque)
+        }
+
+        // Draw her name with fading effect
+        if (textOpacity > 0) { // Only draw if opacity is greater than 0
+            ctx.fillStyle = `rgba(255, 255, 157, ${textOpacity})`;
+            ctx.font = "30px 'Ms Madi'";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("Trang Vũ", width / 2, height / 2);
+        }
+
         for (i = e.length; i--;) {
             var u = e[i];
             var q = targetPoints[u.q];
@@ -104,8 +127,7 @@ var init = function () {
             if (10 > length) {
                 if (0.95 < rand()) {
                     u.q = ~~(rand() * heartPointsCount);
-                }
-                else {
+                } else {
                     if (0.99 < rand()) {
                         u.D *= -1;
                     }
@@ -133,8 +155,6 @@ var init = function () {
                 ctx.fillRect(u.trace[k].x, u.trace[k].y, 1, 1);
             }
         }
-        //ctx.fillStyle = "rgba(255,255,255,1)";
-        //for (i = u.trace.length; i--;) ctx.fillRect(targetPoints[i][0], targetPoints[i][1], 2, 2);
 
         window.requestAnimationFrame(loop, canvas);
     };
